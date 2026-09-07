@@ -1,0 +1,1 @@
+export const MAX_GOOGLE_RESPONSE_BYTES = 8 * 1024 * 1024;

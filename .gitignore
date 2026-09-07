@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tgz
+.env
+.env.*
+!.env.example
+credentials*.json
+client_secret*.json
+*.pem
+*.key
+*.p12
+*.log
+.DS_Store
+coverage/

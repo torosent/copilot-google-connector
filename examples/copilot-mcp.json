@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "google-local": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/INSTALLED/copilot-google-connector/dist/cli.js", "serve"],
+      "env": {},
+      "tools": ["*"],
+      "timeout": 120000
+    }
+  }
+}
