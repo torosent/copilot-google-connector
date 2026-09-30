@@ -1,0 +1,35 @@
+## 1 | shell | Caption before consent
+note Part 1 of 2 - Authorize the local connector with Google. Requested access is identity plus Calendar only.
+
+## 2 | shell | Real Google consent for the demo account (opens the default browser)
+google-connector accounts reauth YOUR_DEMO_ACCOUNT_ID
+
+## 3 | shell | Caption before the agent
+note Part 2 of 2 - Local Copilot agent using the connector Calendar tools for the demo account only.
+
+## 4 | shell | Start the local Copilot agent
+copilot
+
+## 5 | agent | calendar.calendarlist.readonly - list calendars
+[Scope: calendar.calendarlist.readonly] Using the google-local calendar_list_calendars tool, list the calendars of Google account YOUR_DEMO_ACCOUNT_ID. Use only that account.
+
+## 6 | agent | calendar.events - create the disposable private event
+[Scope: calendar.events] Using calendar_create_event, create a private event for account YOUR_DEMO_ACCOUNT_ID on calendarId primary. Use requestId calendar-demo-20260930-create-video-demo, sendUpdates none, summary "Chatter verification demo", eventType default, visibility private, transparency opaque, no attendees, and a timed event from 2026-09-30T17:00:00Z to 2026-09-30T17:20:00Z with timeZone UTC.
+
+## 7 | agent | calendar.events - read the event back
+[Scope: calendar.events] Using calendar_get_event, read back the event you just created: account YOUR_DEMO_ACCOUNT_ID, calendarId primary, and the eventId returned by the create call.
+
+## 8 | agent | calendar.events - move it by 15 minutes
+[Scope: calendar.events] Using calendar_update_event, move that same event 15 minutes later: account YOUR_DEMO_ACCOUNT_ID, calendarId primary, the same eventId, scope single, sendUpdates none, requestId calendar-demo-20260930-update-video-demo, and changes.timing timed from 2026-09-30T17:15:00Z to 2026-09-30T17:35:00Z with timeZone UTC.
+
+## 9 | agent | calendar.events.freebusy - busy intervals
+[Scope: calendar.events.freebusy] Using calendar_free_busy for account YOUR_DEMO_ACCOUNT_ID and calendarId primary, show the busy intervals from 2026-09-30T17:00:00Z to 2026-09-30T18:00:00Z.
+
+## 10 | agent | calendar.events.freebusy - find open time
+[Scope: calendar.events.freebusy] Now use calendar_find_availability for the same account, calendar and window with durationMinutes 20 and maxResults 3.
+
+## 11 | agent | calendar.events - delete, pending human approval
+[Scope: calendar.events] Using calendar_delete_event, delete only that "Chatter verification demo" event: account YOUR_DEMO_ACCOUNT_ID, calendarId primary, the same eventId, scope single, sendUpdates none, requestId calendar-demo-20260930-delete-video-demo. It needs my manual approval, so show me the review URL and stop. Do not try to approve it.
+
+## 12 | agent | Result after you approved the deletion in the review page
+I approved the deletion in the review page. Using operation_status, check the result of that delete operation.

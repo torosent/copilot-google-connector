@@ -1,0 +1,28 @@
+#!/bin/bash
+# Starts the clean interactive shell shown on camera, with a minimal environment.
+#   stage-shell           interactive shell (used by the recorded Ghostty window)
+#   stage-shell --check   print what the stage shell resolves, then exit
+KIT="$(cd "$(dirname "$0")/.." && pwd)"
+NODE_DIR="$(cat "$KIT/.node-dir" 2>/dev/null || true)"
+if [ -z "$NODE_DIR" ]; then
+  NODE_DIR="$(dirname "$(command -v node 2>/dev/null || echo /usr/local/bin/node)")"
+fi
+CONNECTOR_BIN_DIR="$HOME/.local/share/copilot-google-connector/node_modules/.bin"
+
+pass=()
+for name in HOME USER LOGNAME TMPDIR LANG LC_ALL LC_CTYPE TERM TERMINFO COLORTERM \
+            TERM_PROGRAM TERM_PROGRAM_VERSION __CF_USER_TEXT_ENCODING; do
+  if [ -n "${!name-}" ]; then pass+=("$name=${!name}"); fi
+done
+while IFS= read -r kv; do pass+=("$kv"); done < <(env | grep -E '^GHOSTTY_' || true)
+
+zsh_args=(-i)
+if [ "${1:-}" = "--check" ]; then
+  pass+=("DEMO_CHECK=1")
+  zsh_args=(-i -c 'for c in copilot google-connector node; do printf "%s -> %s\n" "$c" "$(whence -p $c)"; done; printf "COPILOT_HOME=%s\n" "$COPILOT_HOME"; printf "alias copilot: %s\n" "$(alias copilot 2>/dev/null || echo none)"')
+fi
+
+exec env -i ${pass[@]+"${pass[@]}"} \
+  PATH="$KIT/bin:$CONNECTOR_BIN_DIR:$NODE_DIR:/usr/bin:/bin:/usr/sbin:/sbin" \
+  COPILOT_HOME="$KIT/home" ZDOTDIR="$KIT/zdot" SHELL=/bin/zsh KIT="$KIT" \
+  /bin/zsh "${zsh_args[@]}"

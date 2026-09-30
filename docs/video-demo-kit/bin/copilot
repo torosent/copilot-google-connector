@@ -1,0 +1,53 @@
+#!/bin/bash
+# Launches the standalone Copilot CLI in the isolated, Calendar-only demo profile.
+# It deliberately bypasses any `copilot` shell alias or wrapper (for example an
+# enterprise wrapper that loads other MCP servers).
+set -euo pipefail
+
+KIT="$(cd "$(dirname "$0")/.." && pwd)"
+
+COPILOT_BIN="${DEMO_COPILOT_BIN:-}"
+if [ -z "$COPILOT_BIN" ]; then
+  COPILOT_BIN="$(ls -d "$HOME"/.copilot-cli/*/copilot 2>/dev/null | sort -V | tail -1)"
+fi
+[ -x "$COPILOT_BIN" ] || { echo "Standalone Copilot CLI not found under ~/.copilot-cli" >&2; exit 1; }
+
+export COPILOT_HOME="$KIT/home"
+cd "$KIT/work"
+
+# Calendar tools only: no accounts_list (it would list every connected account),
+# no Gmail tools, no RSVP. Add more with DEMO_EXTRA_TOOLS="calendar_list_events ...".
+TOOLS="calendar_list_calendars calendar_get_event calendar_create_event calendar_update_event calendar_delete_event calendar_free_busy calendar_find_availability operation_status ${DEMO_EXTRA_TOOLS:-}"
+# Rehearsals: DEMO_READONLY=1 removes every write tool, so nothing can be created or changed.
+if [ -n "${DEMO_READONLY:-}" ]; then
+  TOOLS="calendar_list_calendars calendar_get_event calendar_free_busy calendar_find_availability operation_status"
+fi
+
+# Rehearsals: DEMO_DENY_WRITES=1 keeps the write tools visible to the model but the CLI refuses to
+# run them, so the arguments the model would send can be checked without changing anything.
+DENY="${DEMO_DENY:-}"
+if [ -n "${DEMO_DENY_WRITES:-}" ]; then DENY="$DENY calendar_create_event calendar_update_event calendar_delete_event"; fi
+
+available=()
+allowed=()
+denied=()
+for tool in $TOOLS; do
+  available+=("google-local-$tool")
+  case " $DENY " in
+    *" $tool "*) denied+=(--deny-tool "google-local($tool)") ;;
+    *) allowed+=(--allow-tool "google-local($tool)") ;;
+  esac
+done
+
+# A generally available model, so the footer on camera does not show an internal one.
+model=(--model "${DEMO_MODEL:-claude-sonnet-4.6}")
+
+exec "$COPILOT_BIN" \
+  --no-auto-update --no-custom-instructions --disable-builtin-mcps \
+  --no-remote --no-remote-export --no-ask-user --no-experimental \
+  --allow-all-mcp-server-instructions \
+  "${model[@]}" \
+  --available-tools "${available[@]}" \
+  ${allowed[@]+"${allowed[@]}"} \
+  ${denied[@]+"${denied[@]}"} \
+  "$@"
